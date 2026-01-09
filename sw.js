@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wetter'; // Ändere v2 zu v3, v4 etc., um Updates zu erzwingen
+const CACHE_NAME = 'wetter-v1'; // Ändere v2 zu v3, v4 etc., um Updates zu erzwingen
 const ASSETS = [
   'index.html',
   'manifest.json',
