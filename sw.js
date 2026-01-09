@@ -2,6 +2,7 @@ const CACHE_NAME = 'wetter'; // Ändere v2 zu v3, v4 etc., um Updates zu erzwing
 const ASSETS = [
   'index.html',
   'manifest.json',
+  'favicon.png',
   'icon-192.png',
   'icon-512.png'
 ];
