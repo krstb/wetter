@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -337,7 +337,7 @@
     </div>
 
     <div id="rainPopup" class="popup-overlay">
-        <div class="popup-content max-w-xl responsive-table"> 
+        <div class="popup-content max-xl responsive-table"> 
             <span class="close-btn">×</span>
             
             <table class="table-auto w-full text-sm text-left text-gray-500">
@@ -384,7 +384,7 @@
     </div>
 
     <div id="alertPopup" class="popup-overlay">
-        <div class="popup-content max-w-xl">
+        <div class="popup-content max-xl">
             <span class="close-btn">×</span>
             <div class="flex items-center gap-3 mb-4">
                 <h2 id="alertPopupHeadline" class="text-2xl font-bold"></h2>
@@ -528,7 +528,7 @@
             const currentDateDisplayEl = document.getElementById('currentDateDisplay');
             const weatherDisplayEl = document.getElementById('weatherDisplay');
             const lastUpdatedEl = document.getElementById('lastUpdated');
-            // NEU: Basis des Rechenmodells Element
+            // Basis des Rechenmodells Element
             const dataValidFromEl = document.getElementById('dataValidFrom'); 
             
             const windPopup = document.getElementById('windPopup');
@@ -554,7 +554,7 @@
             const LAST_CITY_KEY = 'lastCity';
             const RECENT_CITIES_KEY = 'recentCities';
             
-            // Cuxhaven entfernt. Nur Stadtbergen bleibt als permanente Stadt/Fallback.
+            // Nur Stadtbergen bleibt als permanente Stadt/Fallback.
             const permanentCities = [
                 { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true }
             ];
@@ -859,7 +859,11 @@
             function updateWeatherDisplay() {
                 const now = new Date();
                 lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
-                dataValidFromEl.textContent = ''; // Standardmäßig leeren
+                
+                // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
+                const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
 
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
@@ -902,23 +906,6 @@
                         currentDateDisplayEl.textContent = `${shortDay}, ${formattedDate}`;
                     }
                 }
-
-                // ANPASSUNG: Anzeige der Basis des Rechenmodells. 
-                // Wir verwenden den Zeitstempel der ersten Stunde des *heutigen* Tages (Index 3, da past_days=3), da dies der Start der eigentlichen Vorhersage ist.
-                const forecastStartIndex = 3;
-                if (dailyForecasts.length > forecastStartIndex && dailyForecasts[forecastStartIndex].length > 0) {
-                    // Holen des Zeitstempels der ersten Stunde des heutigen Tages (Index 3, Start der Vorhersage)
-                    const firstHourlyTimeStr = dailyForecasts[forecastStartIndex][0].time; 
-                    
-                    if (firstHourlyTimeStr) {
-                        const validDate = new Date(firstHourlyTimeStr);
-                        const dateStr = validDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                        const timeStr = validDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        
-                        // ✅ TEXT HIER GEÄNDERT: von "Basis des Rechenmodells: ..." zu "Basis: ..."
-                        dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
-                    }
-                }
                 
                 summaryDataEl.classList.remove('hidden');
                 
@@ -944,7 +931,6 @@
                 dailyDescEl.textContent = getWeatherDescription(summaryIconCode);
                 dailyIconContainerEl.innerHTML = getWeatherEmoji(summaryIconCode);
                 
-                // ANPASSUNG 1: Tagesübersicht Wind-Darstellung: (Böen: ...) ersetzt durch , Böen: ...
                 dailyDetailsEl.innerHTML = `Druck: ${formattedMaxPressure} / ${formattedMinPressure}<br><span id="dailyWindValue" class="cursor-pointer hover:underline">Wind: ${maxWindSpeed}, Böen: ${maxWindGust}</span><br><span id="dailyRainValue" class="cursor-pointer hover:underline">Niederschlag: ${totalPrecipitation}</span><br>Sonnenschein: ${formattedSunshine}`;
 
                 document.getElementById('dailyWindValue')?.addEventListener('click', () => openPopup('windPopup'));
@@ -959,8 +945,6 @@
                     const forecast = hourlyMap.get(h);
                     let cardContent;
                     
-                    // Feste Breite von w-[90px] auf w-[80px] reduziert
-                    // Padding von p-1 (4px) beibehalten
                     let cardClasses = `p-1 rounded-lg shadow-md text-sm text-center w-[80px] flex flex-col justify-start cursor-pointer flex-shrink-0`;
                     
                     if (forecast) {
@@ -972,7 +956,6 @@
                         const windgustValue = forecast.windgust !== undefined ? Math.round(forecast.windgust) : 0;
                         const pressureValue = forecast.pressure !== undefined ? Math.round(forecast.pressure) : 'N/A';
                         
-                        // ANPASSUNG 2: Stundenübersicht Wind-Darstellung: / ersetzt durch -
                         let infoBlock = `
                             <div class="flex flex-col items-center justify-start h-10">
                                 <span class="text-xs text-gray-700">${windspeedValue}-${windgustValue} km/h</span> 
@@ -982,8 +965,6 @@
                         `;
 
                         if (forecastDate === today && h === currentHour) {
-                            // Feste Breite von w-[90px] auf w-[80px] reduziert
-                            // Padding von p-1 (4px) beibehalten
                             cardClasses = `p-1 rounded-lg shadow-xl text-sm text-center w-[80px] flex flex-col justify-start bg-blue-200 text-blue-800 border-2 border-blue-400 flex-shrink-0`;
                             cardContent = `<p class="font-bold text-blue-800">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji(iconCode)}</p><p class="text-lg font-bold text-blue-800">${formattedTemp}</p></div>${infoBlock}`;
                         } else {
@@ -992,7 +973,6 @@
                         }
                     } else {
                         cardClasses += ` bg-red-200 text-red-800 border-2 border-red-500`;
-                        // Feste Höhe für den unteren Info-Block (Wind/Druck/Niederschlag) auch für N/A, um Layout-Shift zu verhindern
                         cardContent = `<p class="font-bold text-red-800">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji('error')}</p><p class="text-lg font-bold text-red-800">N/A</p></div><div class="flex flex-col items-center justify-start h-10">N/A</div>`;
                     }
                     
@@ -1003,8 +983,6 @@
                     forecastCard.innerHTML = cardContent;
                 }
                 
-                // Scrollen zur aktuellen Stunde (Heute) oder zur Mittagszeit (andere Tage) sofort nach dem Rendern
-                // Durch die feste Breite sollte die Scroll-Aktion jetzt stabil sein.
                 setTimeout(() => {
                     if (forecastDate === today) {
                         const currentHourCard = document.getElementById(`hourly-forecast-${currentHour}`);
@@ -1017,7 +995,7 @@
                             noonCard.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
                         }
                     }
-                }, 0); // Verzögerung auf 0ms reduziert, um den Sprung zu minimieren.
+                }, 0);
                 
                 prevDayBtn.disabled = currentDayIndex <= 0;
                 nextDayBtn.disabled = currentDayIndex >= dailyForecasts.length - 1;
@@ -1182,7 +1160,6 @@
                         await fetchAndProcessWeather(locationData);
                         toggleSearchbar(false);
                     } else {
-                        // Startet mit Stadtbergen als Standard, wenn keine letzte Stadt gespeichert ist
                         const defaultLocation = permanentCities.find(c => c.name === STADTBERGEN_NAME) || permanentCities[0];
                         saveRecentCities(defaultLocation);
                         await fetchAndProcessWeather(defaultLocation);
@@ -1214,10 +1191,8 @@
                 
                 suggestionsContainerEl.innerHTML = '';
                 if (locationDataList && locationDataList.length > 0) {
-                    // Sortierlogik, die Deutschland und Bayern/Niedersachsen priorisiert
                     locationDataList.sort((a, b) => {
                         const getPriority = (loc) => {
-                            // Bleibt so, auch wenn Cuxhaven weg ist. Priorisiert immer noch Bayern
                             if (loc.country === 'Deutschland' && loc.admin1 === 'Bayern') return 1;
                             if (loc.country === 'Deutschland') return 2;
                             return 3;
@@ -1230,11 +1205,10 @@
                             return priorityA - priorityB;
                         }
 
-                        // Bei gleicher Priorität, alphabetisch nach Land, dann Bundesland, dann Ort sortieren
                         const countryA = a.country || '';
                         const countryB = b.country || '';
                         const admin1A = a.admin1 || '';
-                        const admin1B = b.admin1 || ''; // Corrected to use b.admin1
+                        const admin1B = b.admin1 || ''; 
                         const nameA = a.name || '';
                         const nameB = b.name || '';
                         
@@ -1285,7 +1259,6 @@
 
             loadInitialCity();
             
-            // AUTOMATISCHES REFRESH-INTERVALL VON 5 MINUTEN (300000ms) AUF 30 MINUTEN (1800000ms) GEÄNDERT
             setInterval(() => {
                 if (lastLocationData) {
                     console.log(`Aktualisiere Wetterdaten für ${lastLocationData.name} automatisch...`);
@@ -1296,7 +1269,3 @@
     </script>
 </body>
 </html>
-
-
-
-
