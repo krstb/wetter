@@ -211,7 +211,7 @@
             <div id="weatherDisplay">
                 <div class="flex items-center justify-between mb-8 h-16">
                     <button id="prevDayBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                        &lt;
+                        <
                     </button>
 
                     <div class="flex-grow flex flex-col items-center justify-center">
@@ -223,7 +223,7 @@
                     </div>
 
                     <button id="nextDayBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                        &gt;
+                        >
                     </button>
                 </div>
 
@@ -267,7 +267,7 @@
                 </thead>
                 <tbody>
                     <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">&lt; 1</span> <span class="text-gray-500">(0 - 0,2)</span></td>
+                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">< 1</span> <span class="text-gray-500">(0 - 0,2)</span></td>
                         <td data-label="Bezeichnung" class="px-2 py-1">Windstille</td>
                         <td data-label="Beispiele" class="px-2 py-1">Rauch steigt senkrecht auf</td>
                     </tr>
@@ -350,7 +350,7 @@
                 </thead>
                 <tbody>
                     <tr class="bg-green-100 border-b">
-                        <td data-label="pro h / 24 h (mm)" class="px-2 py-1">&lt; 5 / &lt; 10</td>
+                        <td data-label="pro h / 24 h (mm)" class="px-2 py-1">< 5 / < 10</td>
                         <td data-label="Kategorie" class="px-2 py-1">Leicht</td>
                         <td data-label="Auswirkungen" class="px-2 py-1">Normaler Regen, ohne Beeinträchtigungen</td>
                     </tr>
@@ -370,7 +370,7 @@
                         <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: Überflutungen, vollgelaufene Keller und Unterführungen</td>
                     </tr>
                     <tr class="bg-purple-100">
-                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">&gt; 40 / &gt; 80</td>
+                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">> 40 / > 80</td>
                         <td data-label="Kategorie" class="px-2 py-1">Extremes Unwetter</td>
                         <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: Lebensbedrohliche Situationen, massive Überflutungen</td>
                     </tr>
@@ -409,23 +409,23 @@
                 
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <h4 class="font-bold mb-1">Wind und Windböen</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 62 km/h</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 75 km/h</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 90 km/h</p>
+                    <p><span class="font-semibold text-yellow-600">Moderat:</span> >= 62 km/h</p>
+                    <p><span class="font-semibold text-red-600">Schwer:</span> >= 75 km/h</p>
+                    <p><span class="font-semibold text-purple-600">Extrem:</span> >= 90 km/h</p>
                 </div>
                 
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <h4 class="font-bold mb-1">Starkregen pro Stunde</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 5 mm/h</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 15 mm/h</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 40 mm/h</p>
+                    <p><span class="font-semibold text-yellow-600">Moderat:</span> >= 5 mm/h</p>
+                    <p><span class="font-semibold text-red-600">Schwer:</span> >= 15 mm/h</p>
+                    <p><span class="font-semibold text-purple-600">Extrem:</span> >= 40 mm/h</p>
                 </div>
                 
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <h4 class="font-bold mb-1">Starkregen Tagessumme</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 15 mm</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 30 mm</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 80 mm</p>
+                    <p><span class="font-semibold text-yellow-600">Moderat:</span> >= 15 mm</p>
+                    <p><span class="font-semibold text-red-600">Schwer:</span> >= 30 mm</p>
+                    <p><span class="font-semibold text-purple-600">Extrem:</span> >= 80 mm</p>
                 </div>
                 
                 <div class="bg-gray-50 p-3 rounded-lg"> 
@@ -695,11 +695,6 @@
                     if (!response.ok) throw new Error(`Fehler beim Laden der Wetterdaten: ${response.statusText}`);
                     const data = await response.json();
                     
-                    // NEU: Uhrzeit wird erst gesetzt, wenn die API-Daten erfolgreich empfangen wurden
-                    const now = new Date();
-                    const timeString = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                    lastUpdatedEl.textContent = `Stand: ${timeString} Uhr`;
-
                     if (!data.hourly || !data.daily) {
                         throw new Error('Ungültige oder unvollständige Daten von der API erhalten.');
                     }
@@ -863,6 +858,7 @@
 
             function updateWeatherDisplay() {
                 const now = new Date();
+             /*   lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;*/
                 
                 // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
                 const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -1273,3 +1269,7 @@
     </script>
 </body>
 </html>
+
+
+
+
