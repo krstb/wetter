@@ -689,19 +689,16 @@
                 
                 try {
                     const timezone = 'Europe/Berlin';
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,pressure_msl,windspeed_10m,precipitation,windspeed_10m,windgusts_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,precipitation_sum,sunshine_duration,windgusts_10m_max&timezone=${timezone}&forecast_days=10&past_days=3`;
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,pressure_msl,windspeed_10m,precipitation,windgusts_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,precipitation_sum,sunshine_duration,windgusts_10m_max&timezone=${timezone}&forecast_days=10&past_days=3`;
 
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`Fehler beim Laden der Wetterdaten: ${response.statusText}`);
                     const data = await response.json();
                     
-                    // AKTUALISIERUNG DER ZEITANZEIGEN
+                    // NEU: Uhrzeit wird erst gesetzt, wenn die API-Daten erfolgreich empfangen wurden
                     const now = new Date();
-                    const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                    
-                    lastUpdatedEl.textContent = `Aktualisiert: ${timeStr} Uhr`;
-                    dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
+                    const timeString = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    lastUpdatedEl.textContent = `Stand: ${timeString} Uhr`;
 
                     if (!data.hourly || !data.daily) {
                         throw new Error('Ungültige oder unvollständige Daten von der API erhalten.');
@@ -725,8 +722,6 @@
                     weatherErrorEl.textContent = "Wetterdaten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.";
                     weatherErrorEl.classList.remove('hidden');
                     summaryStatusEl.classList.add('hidden'); 
-                    lastUpdatedEl.textContent = '';
-                    dataValidFromEl.textContent = '';
                 }
             }
             
@@ -868,13 +863,17 @@
 
             function updateWeatherDisplay() {
                 const now = new Date();
+                
+                // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
+                const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
 
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
                     summaryStatusEl.classList.remove('hidden');
                     summaryDataEl.classList.add('hidden');
                     lastUpdatedEl.textContent = '';
-                    dataValidFromEl.textContent = '';
                     return;
                 }
                 
@@ -1118,7 +1117,7 @@
                     weatherLocationEl.classList.add('hidden');
                     
                     if (lastLocationData) {
-                        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lastLocationData.lat},${lastLocationData.lon}`;
+                        const googleMapsUrl = `https://www.google.com/maps?q=${lastLocationData.lat},${lastLocationData.lon}&z=12`;
                         let coordsText = `<span class="font-bold">Letzte Suche</span><br>
                                             ${lastLocationData.name}, ${lastLocationData.admin1 ? lastLocationData.admin1 + ', ' : ''}${lastLocationData.country}
                                             <br>
