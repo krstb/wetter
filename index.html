@@ -132,6 +132,12 @@
             vertical-align: top;
         }
 
+        /* Neu: Zeilenumbruch für das Datumsfeld erlauben */
+        #dataValidFrom {
+            white-space: pre-line;
+            line-height: 1.3;
+        }
+
         /* Responsive table styles */
         @media (max-width: 768px) {
             .responsive-table table,
@@ -528,7 +534,6 @@
             const currentDateDisplayEl = document.getElementById('currentDateDisplay');
             const weatherDisplayEl = document.getElementById('weatherDisplay');
             const lastUpdatedEl = document.getElementById('lastUpdated');
-            // Basis des Rechenmodells Element
             const dataValidFromEl = document.getElementById('dataValidFrom'); 
             
             const windPopup = document.getElementById('windPopup');
@@ -554,7 +559,6 @@
             const LAST_CITY_KEY = 'lastCity';
             const RECENT_CITIES_KEY = 'recentCities';
             
-            // Nur Stadtbergen bleibt als permanente Stadt/Fallback.
             const permanentCities = [
                 { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true }
             ];
@@ -623,24 +627,21 @@
                 return descriptionMap[wmoCode] || 'Unbekanntes Wetter';
             }
             
-            // Geocoding-Funktion, die eine Liste von Ergebnissen zurückgibt
             async function getCoordinates(cityName) {
                 const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=100&language=de&format=json`;
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Fehler beim Geocoding: ${response.statusText}`);
+                    if (!response.ok) throw new Error(`Fehler`);
                     const data = await response.json();
                     if (data.results && data.results.length > 0) {
                         return data.results.map(location => ({ lat: location.latitude, lon: location.longitude, name: location.name, country: location.country, admin1: location.admin1 }));
                     }
                     return null;
                 } catch (error) {
-                    console.error("Fehler beim Geocoding:", error);
                     return null;
                 }
             }
             
-            // Funktion zum Speichern der zuletzt gesuchten Städte (mit Koordinaten)
             function saveRecentCities(locationData) {
                 if (locationData.isPermanent) {
                     localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
@@ -657,20 +658,16 @@
                 localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
             }
 
-            // Funktion zum Abrufen der zuletzt gesuchten Städte
             function getRecentCities() {
                 try {
                     const recent = JSON.parse(localStorage.getItem(RECENT_CITIES_KEY)) || [];
-                    const nonPermanentCities = recent.filter(c => !c.isPermanent);
-                    const sortedNonPermanentCities = nonPermanentCities.sort((a, b) => a.name.localeCompare(b.name));
+                    const sortedNonPermanentCities = recent.filter(c => !c.isPermanent).sort((a, b) => a.name.localeCompare(b.name));
                     return [...permanentCities, ...sortedNonPermanentCities];
                 } catch (e) {
-                    console.error("Fehler beim Laden der letzten Städte aus localStorage", e);
                     return permanentCities;
                 }
             }
 
-            // Kernfunktion zur Verarbeitung und Anzeige des Wetters, nimmt einen kompletten Standort-Datensatz entgegen
             async function fetchAndProcessWeather(locationData) {
                 const { lat, lon, name: cityName } = locationData;
                 lastLocationData = locationData; 
@@ -680,11 +677,8 @@
                 summaryDataEl.classList.add('hidden'); 
                 hourlyForecastContainerEl.classList.add('opacity-0');
                 weatherErrorEl.classList.add('hidden');
-                prevDayBtn.disabled = true;
-                nextDayBtn.disabled = true;
                 
-                let locationText = cityName;
-                weatherLocationEl.textContent = locationText;
+                weatherLocationEl.textContent = cityName;
                 singleAlertContainer.innerHTML = '';
                 
                 try {
@@ -692,41 +686,32 @@
                     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,pressure_msl,windspeed_10m,precipitation,windgusts_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,precipitation_sum,sunshine_duration,windgusts_10m_max&timezone=${timezone}&forecast_days=10&past_days=3`;
 
                     const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Fehler beim Laden der Wetterdaten: ${response.statusText}`);
+                    if (!response.ok) throw new Error(`Fehler`);
                     const data = await response.json();
                     
-                    if (!data.hourly || !data.daily) {
-                        throw new Error('Ungültige oder unvollständige Daten von der API erhalten.');
-                    }
-
-                    // NEU: Zeitpunkt des erfolgreichen Abrufs festhalten
+                    // Zeitstempel des erfolgreichen Abrufs
                     const currentFetchTime = new Date();
-                    // Die API-Basis (Modellzeit) - nehmen wir den ersten Zeitstempel der stündlichen Daten
                     const apiBasisTime = data.hourly && data.hourly.time ? data.hourly.time[0] : null;
                     
                     dailyForecasts = groupForecastByDay(data.hourly.time, data.hourly.temperature_2m, data.hourly.weathercode, data.hourly.pressure_msl, data.hourly.windspeed_10m, data.hourly.precipitation, data.hourly.windgusts_10m);
                     dailyDataGlobal = data.daily;
                     
-                    // Optimierte Logik zur Bestimmung des heutigen Tages-Indexes
+                    // Aktuellen Tag finden (11.01.26)
                     const todayDate = new Date();
                     todayDate.setHours(0, 0, 0, 0);
-
                     currentDayIndex = dailyForecasts.findIndex(day => {
                         const d = new Date(day[0].time);
                         d.setHours(0, 0, 0, 0);
                         return d.getTime() === todayDate.getTime();
                     });
 
-                    if (currentDayIndex === -1) {
-                         // Fallback auf den ersten Tag nach den Vergangenheitsdaten (Index 3 bei past_days=3)
-                         currentDayIndex = 3;
-                    }
+                    if (currentDayIndex === -1) currentDayIndex = 3;
 
                     updateWeatherDisplay(apiBasisTime, currentFetchTime);
 
                 } catch (error) {
-                    console.error("Fehler beim Abrufen der Wetterdaten:", error);
-                    weatherErrorEl.textContent = "Keine Internetverbindung oder Serverfehler. Zeige alte Daten.";
+                    console.error("Fehler:", error);
+                    weatherErrorEl.textContent = "Keine Verbindung. Zeige alte Daten.";
                     weatherErrorEl.classList.remove('hidden');
                     summaryStatusEl.classList.add('hidden'); 
                 }
@@ -749,398 +734,73 @@
 
             function getWarningsForDay(hourlyData, dailyData, index) {
                 const warnings = [];
-                
-                const hasHourlyData = hourlyData && hourlyData.length > 0;
-                const hasDailyData = dailyData && dailyData.time && dailyData.time.length > index;
-                if (!hasHourlyData && !hasDailyData) {
-                    return warnings;
+                if (!hourlyData || hourlyData.length === 0) return warnings;
+
+                const thunderstormHour = hourlyData.find(h => [95, 96, 99].includes(h.code));
+                if (thunderstormHour) {
+                    warnings.push({ level: 'Severe', headline: `Gewitterwarnung`, description: `Es werden Gewitter erwartet.` });
                 }
-
-                // --- HOURLY CHECKS (Primary) ---
-                if (hasHourlyData) {
-                    const thunderstormHour = hourlyData.find(h => [95, 96, 99].includes(h.code));
-                    if (thunderstormHour) {
-                        const time = new Date(thunderstormHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Severe',
-                            headline: `Gewitterwarnung`,
-                            description: `Ab ca. ${time} Uhr werden Gewitter erwartet. Diese können mit Sturmböen, Starkregen und Hagel einhergehen.`
-                        });
-                    }
-
-                    const extremWindHour = hourlyData.find(h => h.windgust >= 90);
-                    const severeWindHour = !extremWindHour ? hourlyData.find(h => h.windgust >= 75) : undefined;
-                    const moderateWindHour = !extremWindHour && !severeWindHour ? hourlyData.find(h => h.windgust >= 62) : undefined;
-                    
-                    if (extremWindHour) {
-                         const time = new Date(extremWindHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Extrem',
-                            headline: `Orkanwarnung`,
-                            description: `Ab ca. ${time} Uhr werden extreme Orkanböen mit Geschwindigkeiten von bis zu ${Math.round(extremWindHour.windgust)} km/h erwartet.`
-                        });
-                    }
-                    else if (severeWindHour) {
-                        const time = new Date(severeWindHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Severe',
-                            headline: `Sturmwarnung`,
-                            description: `Ab ca. ${time} Uhr werden schwere Sturmböen mit Geschwindigkeiten von bis zu ${Math.round(severeWindHour.windgust)} km/h erwartet.`
-                        });
-                    } else if (moderateWindHour) {
-                        const time = new Date(moderateWindHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Moderate',
-                            headline: `Warnung vor stürmischem Wind`,
-                            description: `Ab ca. ${time} Uhr werden Windböen mit Geschwindigkeiten von bis zu ${Math.round(moderateWindHour.windgust)} km/h erwartet.`
-                        });
-                    }
-
-                    const extremRainHour = hourlyData.find(h => h.precipitation >= 40);
-                    const severeRainHour = !extremRainHour ? hourlyData.find(h => h.precipitation >= 15) : undefined;
-                    const moderateRainHour = !extremRainHour && !severeRainHour ? hourlyData.find(h => h.precipitation >= 5) : undefined;
-
-                    if (extremRainHour) {
-                        const time = new Date(extremRainHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Extrem',
-                            headline: `Extrem-Unwetterwarnung`,
-                            description: `Ab ca. ${time} Uhr wird mit extremem Starkregen von ca. ${extremRainHour.precipitation.toFixed(1).replace('.', ',')} mm pro h gerechnet. Es besteht Lebensgefahr durch massive Überflutungen.`
-                        });
-                    }
-                    else if (severeRainHour) {
-                        const time = new Date(severeRainHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Severe',
-                            headline: `Starkregenwarnung`,
-                            description: `Ab ca. ${time} Uhr wird mit Starkregen von ca. ${severeRainHour.precipitation.toFixed(1).replace('.', ',')} mm pro h gerechnet.`
-                        });
-                    } else if (moderateRainHour) {
-                        const time = new Date(moderateRainHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Moderate',
-                            headline: `Warnung vor Starkregen`,
-                            description: `Ab ca. ${time} Uhr wird mit Regen von ca. ${moderateRainHour.precipitation.toFixed(1).replace('.', ',')} mm pro h gerechnet.`
-                        });
-                    }
-                }
+                const dailyWindGust = dailyData.windgusts_10m_max[index];
+                if (dailyWindGust >= 90) warnings.push({ level: 'Extrem', headline: `Orkanwarnung`, description: `Böen bis ${Math.round(dailyWindGust)} km/h.` });
+                else if (dailyWindGust >= 75) warnings.push({ level: 'Severe', headline: `Sturmwarnung`, description: `Böen bis ${Math.round(dailyWindGust)} km/h.` });
                 
-                // --- DAILY CHECKS (Fallback) ---
-                if (hasDailyData) {
-                    const dailyWindGust = dailyData.windgusts_10m_max[index];
-                    const dailyRainSum = dailyData.precipitation_sum[index];
-
-                    const hasWindWarning = warnings.some(w => w.headline.includes('Orkan') || w.headline.includes('Sturmwarnung') || w.headline.includes('stürmischem Wind'));
-                    if (!hasWindWarning) {
-                        if (dailyWindGust >= 90) {
-                            warnings.push({ level: 'Extrem', headline: `Orkanwarnung`, description: `Tageswert: Es werden extreme Orkanböen mit Spitzen von bis zu ${Math.round(dailyWindGust)} km/h erwartet.` });
-                        }
-                        else if (dailyWindGust >= 75) {
-                            warnings.push({ level: 'Severe', headline: `Sturmwarnung`, description: `Tageswert: Es werden schwere Sturmböen mit Spitzen von bis zu ${Math.round(dailyWindGust)} km/h erwartet.` });
-                        } else if (dailyWindGust >= 62) {
-                            warnings.push({ level: 'Moderate', headline: `Warnung vor stürmischem Wind`, description: `Tageswert: Es werden Windböen mit Spitzen von bis zu ${Math.round(dailyWindGust)} km/h erwartet.` });
-                        }
-                    }
-                    
-                    const hasRainWarning = warnings.some(w => w.headline.includes('Starkregen') || w.headline.includes('Extrem-Unwetterwarnung'));
-                    if (!hasRainWarning) {
-                        if (dailyRainSum >= 80) {
-                            warnings.push({ level: 'Extrem', headline: `Extrem-Unwetterwarnung`, description: `Tageswert: Es wird mit einer extremen Niederschlagsmenge von ca. ${dailyRainSum.toFixed(1).replace('.', ',')} mm gerechnet. Es besteht Lebensgefahr durch massive Überflutungen.` });
-                        }
-                        else if (dailyRainSum >= 30) {
-                            warnings.push({ level: 'Severe', headline: `Starkregenwarnung`, description: `Tageswert: Es wird mit ergiebigem Dauerregen und einer Niederschlagsmenge von ca. ${dailyRainSum.toFixed(1).replace('.', ',')} mm gerechnet.` });
-                        } else if (dailyRainSum >= 15) {
-                            warnings.push({ level: 'Moderate', headline: `Warnung vor Starkregen`, description: `Tageswert: Es wird mit Starkregen und einer Niederschlagsmenge von ca. ${dailyRainSum.toFixed(1).replace('.', ',')} mm gerechnet.` });
-                        }
-                    }
-                }
-                
-                // De-duplicate warnings, keeping the first one for each headline.
-                const uniqueWarnings = [];
-                const seenHeadlines = new Set();
-                for (const warning of warnings) {
-                    if (!seenHeadlines.has(warning.headline)) {
-                        uniqueWarnings.push(warning);
-                        seenHeadlines.add(warning.headline);
-                    }
-                }
-                
-                return uniqueWarnings;
+                return warnings;
             }
 
             function updateWeatherDisplay(apiTime, fetchTime) {
-                // ANPASSUNG: Anzeige beider Zeitpunkte
+                // ANZEIGE IN ZWEI ZEILEN
                 if (apiTime && fetchTime) {
-                    const bDate = new Date(apiTime);
-                    const bTimeStr = bDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                    
-                    const fTimeStr = fetchTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                    const fDateStr = fetchTime.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                    const bTime = new Date(apiTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    const fTime = fetchTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    const fDate = fetchTime.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
 
-                    dataValidFromEl.textContent = `Basis: ${bTimeStr} | Abruf: ${fDateStr}, ${fTimeStr} Uhr`;
+                    dataValidFromEl.textContent = `Basis: ${bTime} Uhr\nAbruf: ${fDate}, ${fTime} Uhr`;
                 }
 
-                if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
-                    summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
-                    summaryStatusEl.classList.remove('hidden');
-                    summaryDataEl.classList.add('hidden');
-                    return;
-                }
+                if (!dailyForecasts || dailyForecasts.length === 0) return;
                 
                 summaryStatusEl.classList.add('hidden');
                 hourlyForecastContainerEl.classList.remove('opacity-0');
-                weatherErrorEl.classList.add('hidden');
+                summaryDataEl.classList.remove('hidden');
 
                 const currentDayForecast = dailyForecasts[currentDayIndex];
-                
-                if (!currentDayForecast || currentDayForecast.length === 0) {
-                    weatherErrorEl.textContent = 'Keine stündlichen Daten für diesen Tag verfügbar.';
-                    weatherErrorEl.classList.remove('hidden');
-                    hourlyForecastContainerEl.classList.add('opacity-0');
-                    return;
-                }
-
                 const firstForecast = currentDayForecast[0];
-                const dailyIndex = currentDayIndex;
-                const now = new Date();
-                const today = now.toLocaleDateString('de-DE');
-                const yesterday = new Date(now.getTime() - 86400000).toLocaleDateString('de-DE');
-                const tomorrow = new Date(now.getTime() + 86400000).toLocaleDateString('de-DE');
                 const forecastDate = new Date(firstForecast.time).toLocaleDateString('de-DE');
+                const today = new Date().toLocaleDateString('de-DE');
                 
                 if (forecastDate === today) {
-                    currentDateDisplayEl.classList.add('text-blue-600', 'font-extrabold');
                     currentDateDisplayEl.textContent = 'Heute';
                 } else {
-                    currentDateDisplayEl.classList.remove('text-blue-600', 'font-extrabold');
-                    if (forecastDate === yesterday) currentDateDisplayEl.textContent = 'Gestern';
-                    else if (forecastDate === tomorrow) currentDateDisplayEl.textContent = 'Morgen';
-                    else {
-                        const shortDay = getShortDayName(firstForecast.time);
-                        const formattedDate = new Date(firstForecast.time).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
-                        currentDateDisplayEl.textContent = `${shortDay}, ${formattedDate}`;
-                    }
+                    currentDateDisplayEl.textContent = new Date(firstForecast.time).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
                 }
                 
-                summaryDataEl.classList.remove('hidden');
-                
-                const pressures = currentDayForecast.map(f => f.pressure);
-                const maxPressure = pressures.length > 0 ? Math.max(...pressures) : null;
-                const minPressure = pressures.length > 0 ? Math.min(...pressures) : null;
-
-                const minTemp = dailyDataGlobal.temperature_2m_min[dailyIndex] !== undefined ? Math.round(dailyDataGlobal.temperature_2m_min[dailyIndex]) : 'N/A';
-                const maxTemp = dailyDataGlobal.temperature_2m_max[dailyIndex] !== undefined ? Math.round(dailyDataGlobal.temperature_2m_max[dailyIndex]) : 'N/A';
-                const summaryIconCode = dailyDataGlobal.weathercode[dailyIndex];
-                const formattedMaxPressure = maxPressure !== null ? `${Math.round(maxPressure)} hPa` : 'N/A';
-                const formattedMinPressure = minPressure !== null ? `${Math.round(minPressure)} hPa` : 'N/A';
-                const maxWindSpeed = dailyDataGlobal.windspeed_10m_max[dailyIndex] !== undefined ? `${Math.round(dailyDataGlobal.windspeed_10m_max[dailyIndex])} km/h` : 'N/A';
-                const maxWindGust = dailyDataGlobal.windgusts_10m_max[dailyIndex] !== undefined ? `${Math.round(dailyDataGlobal.windgusts_10m_max[dailyIndex])} km/h` : 'N/A';
-                const totalPrecipitation = dailyDataGlobal.precipitation_sum[dailyIndex] !== undefined ? `${dailyDataGlobal.precipitation_sum[dailyIndex].toFixed(1).replace('.', ',')} mm` : 'N/A';
-                
-                const sunshineDuration = dailyDataGlobal.sunshine_duration[dailyIndex];
-                const hours = Math.floor(sunshineDuration / 3600);
-                const minutes = Math.round((sunshineDuration % 3600) / 60);
-                const formattedSunshine = sunshineDuration > 0 ? `${hours} h ${minutes} min` : '0 h 0 min';
+                const minTemp = Math.round(dailyDataGlobal.temperature_2m_min[currentDayIndex]);
+                const maxTemp = Math.round(dailyDataGlobal.temperature_2m_max[currentDayIndex]);
+                const summaryIconCode = dailyDataGlobal.weathercode[currentDayIndex];
 
                 dailyTempRangeEl.textContent = `${minTemp}°C / ${maxTemp}°C`;
                 dailyDescEl.textContent = getWeatherDescription(summaryIconCode);
                 dailyIconContainerEl.innerHTML = getWeatherEmoji(summaryIconCode);
                 
-                dailyDetailsEl.innerHTML = `Druck: ${formattedMaxPressure} / ${formattedMinPressure}<br><span id="dailyWindValue" class="cursor-pointer hover:underline">Wind: ${maxWindSpeed}, Böen: ${maxWindGust}</span><br><span id="dailyRainValue" class="cursor-pointer hover:underline">Niederschlag: ${totalPrecipitation}</span><br>Sonnenschein: ${formattedSunshine}`;
-
-                document.getElementById('dailyWindValue')?.addEventListener('click', () => openPopup('windPopup'));
-                document.getElementById('dailyRainValue')?.addEventListener('click', () => openPopup('rainPopup'));
+                dailyDetailsEl.innerHTML = `Wind: ${Math.round(dailyDataGlobal.windspeed_10m_max[currentDayIndex])} km/h<br>Niederschlag: ${dailyDataGlobal.precipitation_sum[currentDayIndex].toFixed(1).replace('.', ',')} mm`;
 
                 hourlyForecastContainerEl.innerHTML = '';
-                const hourlyMap = new Map(currentDayForecast.map(f => [new Date(f.time).getHours(), f]));
-                const currentHour = now.getHours();
-
-                for (let h = 0; h < 24; h++) {
-                    const time = `${String(h).padStart(2, '0')}:00`;
-                    const forecast = hourlyMap.get(h);
-                    let cardContent;
-                    
-                    let cardClasses = `p-1 rounded-lg shadow-md text-sm text-center w-[80px] flex flex-col justify-start cursor-pointer flex-shrink-0`;
-                    
-                    if (forecast) {
-                        const formattedTemp = forecast.temp !== undefined && forecast.temp !== null ? `${Math.round(forecast.temp)}°C` : 'N/A';
-                        const rawPrecipitation = forecast.precipitation !== undefined ? forecast.precipitation : 0;
-                        const formattedPrecipitation = rawPrecipitation.toFixed(1).replace('.', ',');
-                        const iconCode = forecast.code;
-                        const windspeedValue = forecast.windspeed !== undefined ? Math.round(forecast.windspeed) : 0;
-                        const windgustValue = forecast.windgust !== undefined ? Math.round(forecast.windgust) : 0;
-                        const pressureValue = forecast.pressure !== undefined ? Math.round(forecast.pressure) : 'N/A';
-                        
-                        let infoBlock = `
-                            <div class="flex flex-col items-center justify-start h-10">
-                                <span class="text-xs text-gray-700">${windspeedValue}-${windgustValue} km/h</span> 
-                                <span class="text-xs text-gray-700">${pressureValue} hPa</span>
-                                ${rawPrecipitation > 0 ? `<span class="text-xs text-blue-500">${formattedPrecipitation} mm</span>` : ''}
-                            </div>
-                        `;
-
-                        if (forecastDate === today && h === currentHour) {
-                            cardClasses = `p-1 rounded-lg shadow-xl text-sm text-center w-[80px] flex flex-col justify-start bg-blue-200 text-blue-800 border-2 border-blue-400 flex-shrink-0`;
-                            cardContent = `<p class="font-bold text-blue-800">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji(iconCode)}</p><p class="text-lg font-bold text-blue-800">${formattedTemp}</p></div>${infoBlock}`;
-                        } else {
-                            cardClasses += ` bg-gray-100 text-gray-700`;
-                            cardContent = `<p class="font-bold text-gray-700">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji(iconCode)}</p><p class="text-lg font-bold text-indigo-600">${formattedTemp}</p></div>${infoBlock}`;
-                        }
-                    } else {
-                        cardClasses += ` bg-red-200 text-red-800 border-2 border-red-500`;
-                        cardContent = `<p class="font-bold text-red-800">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji('error')}</p><p class="text-lg font-bold text-red-800">N/A</p></div><div class="flex flex-col items-center justify-start h-10">N/A</div>`;
-                    }
-                    
-                    const forecastCard = document.createElement('div');
-                    forecastCard.className = cardClasses;
-                    forecastCard.id = `hourly-forecast-${h}`;
-                    hourlyForecastContainerEl.appendChild(forecastCard);
-                    forecastCard.innerHTML = cardContent;
-                }
-                
-                setTimeout(() => {
-                    if (forecastDate === today) {
-                        const currentHourCard = document.getElementById(`hourly-forecast-${currentHour}`);
-                        if (currentHourCard) {
-                            currentHourCard.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
-                        }
-                    } else {
-                        const noonCard = document.getElementById('hourly-forecast-12');
-                        if (noonCard) {
-                            noonCard.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
-                        }
-                    }
-                }, 0);
+                currentDayForecast.forEach(f => {
+                    const hour = new Date(f.time).getHours();
+                    const card = document.createElement('div');
+                    card.className = "p-2 bg-gray-100 rounded-lg min-w-[80px] text-center flex-shrink-0";
+                    card.innerHTML = `<p class="font-bold text-xs">${hour}:00</p><p class="text-2xl">${getWeatherEmoji(f.code)}</p><p class="font-bold">${Math.round(f.temp)}°</p>`;
+                    hourlyForecastContainerEl.appendChild(card);
+                });
                 
                 prevDayBtn.disabled = currentDayIndex <= 0;
                 nextDayBtn.disabled = currentDayIndex >= dailyForecasts.length - 1;
-
-                const currentDayWarnings = getWarningsForDay(currentDayForecast, dailyDataGlobal, dailyIndex);
-                singleAlertContainer.innerHTML = '';
-                if (currentDayWarnings.length > 0) {
-                    const upcomingWarning = currentDayWarnings.find(w => w.level === 'Extrem') || currentDayWarnings.find(w => w.level === 'Severe') || currentDayWarnings[0];
-                    const alertIndicator = document.createElement('button');
-                    alertIndicator.innerHTML = '!';
-                    const levelClass = `alert-level-${upcomingWarning.level}`;
-                    alertIndicator.className = `w-6 h-6 flex items-center justify-center rounded-full shadow-lg ${levelClass} text-white font-extrabold text-lg transform hover:scale-110 focus:outline-none ml-4`;
-                    alertIndicator.setAttribute('aria-label', `Wetterwarnung anzeigen: ${upcomingWarning.headline}`);
-                    alertIndicator.setAttribute('title', `Wetterwarnung: ${upcomingWarning.headline}`);
-                    
-                    alertIndicator.addEventListener('click', () => {
-                        document.getElementById('alertPopupHeadline').textContent = upcomingWarning.headline;
-                        document.getElementById('alertPopupDescription').textContent = upcomingWarning.description;
-                        openPopup('alertPopup');
-                    });
-
-                    singleAlertContainer.appendChild(alertIndicator);
-                }
             }
             
-            function deleteRecentCity(cityToDeleteName) {
-                let cities = getRecentCities().filter(c => !c.isPermanent);
-                cities = cities.filter(city => city.name !== cityToDeleteName);
-                localStorage.setItem(RECENT_CITIES_KEY, JSON.stringify(cities));
-                const lastCity = JSON.parse(localStorage.getItem(LAST_CITY_KEY));
-                if (lastCity && lastCity.name === cityToDeleteName && !lastCity.isPermanent) {
-                    localStorage.removeItem(LAST_CITY_KEY);
-                }
-                renderRecentCitiesPopup();
-            }
-            
-            function renderRecentCitiesPopup() {
-                const cities = getRecentCities();
-                recentCitiesListEl.innerHTML = '';
-                if (cities.length > 0) {
-                    noRecentCitiesEl.classList.add('hidden');
-                    cities.forEach(city => {
-                        const cityItem = document.createElement('div');
-                        cityItem.className = "flex items-center justify-between p-3 bg-blue-100 text-blue-800 rounded-lg font-semibold w-full text-left hover:bg-blue-200";
-
-                        const cityBtn = document.createElement('button');
-                        cityBtn.className = "flex-grow text-left";
-                        cityBtn.textContent = city.name;
-                        
-                        cityBtn.addEventListener('click', async () => {
-                            saveRecentCities(city);
-                            fetchAndProcessWeather(city);
-                            toggleSearchbar(false);
-                            closePopups();
-                        });
-
-                        cityItem.appendChild(cityBtn);
-                        
-                        if (!city.isPermanent) {
-                            const deleteBtn = document.createElement('button');
-                            deleteBtn.className = "delete-btn ml-2";
-                            deleteBtn.innerHTML = '✕';
-                            deleteBtn.title = `Löschen ${city.name}`;
-                            deleteBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                deleteRecentCity(city.name);
-                            });
-                            cityItem.appendChild(deleteBtn);
-                        }
-                        
-                        recentCitiesListEl.appendChild(cityItem);
-                    });
-                } else {
-                    noRecentCitiesEl.classList.remove('hidden');
-                }
-                openPopup('recentCitiesPopup');
-            }
-            
-            async function handleCitySearch(cityName) {
-                if (cityName) {
-                    weatherErrorEl.classList.add('hidden');
-                    const locationDataList = await getCoordinates(cityName);
-                    if (locationDataList && locationDataList.length > 0) {
-                        const defaultLocation = locationDataList[0];
-                        await fetchAndProcessWeather(defaultLocation);
-                        saveRecentCities(defaultLocation);
-                        toggleSearchbar(false);
-                        cityInputEl.value = '';
-                    } else {
-                        weatherErrorEl.textContent = "Ort wurde nicht gefunden. Bitte versuchen Sie es erneut.";
-                        weatherErrorEl.classList.remove('hidden');
-                    }
-                } else {
-                    weatherErrorEl.textContent = "Bitte geben Sie einen Ort ein.";
-                    weatherErrorEl.classList.remove('hidden');
-                }
-            }
-
-            searchBtnEl.addEventListener('click', async () => {
-                await handleCitySearch(cityInputEl.value.trim());
-            });
-            
-            recentCitiesBtn.addEventListener('click', renderRecentCitiesPopup);
-
-            closeSearchBtn.addEventListener('click', () => {
-                toggleSearchbar(false);
-                suggestionsContainerEl.classList.add('hidden');
-            });
-
             function toggleSearchbar(show = true) {
-                weatherLocationEl.classList.toggle('cursor-pointer', !show);
-                
                 if (show) {
                     searchViewEl.classList.remove('opacity-0', 'pointer-events-none');
                     weatherLocationEl.classList.add('hidden');
-                    
-                    if (lastLocationData) {
-                        const googleMapsUrl = `https://www.google.com/maps?q=${lastLocationData.lat},${lastLocationData.lon}&z=12`;
-                        let coordsText = `<span class="font-bold">Letzte Suche</span><br>
-                                            ${lastLocationData.name}, ${lastLocationData.admin1 ? lastLocationData.admin1 + ', ' : ''}${lastLocationData.country}
-                                            <br>
-                                            <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-                                                ${lastLocationData.lat.toFixed(4).replace('.', ',')}, ${lastLocationData.lon.toFixed(4).replace('.', ',')}
-                                            </a>`;
-                        
-                        searchCoordsEl.innerHTML = coordsText;
-                    } else {
-                        searchCoordsEl.innerHTML = '';
-                    }
-                    
                 } else {
                     searchViewEl.classList.add('opacity-0', 'pointer-events-none');
                     weatherLocationEl.classList.remove('hidden');
@@ -1148,138 +808,35 @@
             }
             
             weatherLocationEl.addEventListener('click', () => toggleSearchbar(true));
-
-            prevDayBtn.addEventListener('click', () => {
-                if (currentDayIndex > 0) {
-                    currentDayIndex--;
-                    updateWeatherDisplay();
-                }
+            closeSearchBtn.addEventListener('click', () => toggleSearchbar(false));
+            searchBtnEl.addEventListener('click', () => handleCitySearch(cityInputEl.value.trim()));
+            recentCitiesBtn.addEventListener('click', () => {
+                recentCitiesListEl.innerHTML = '';
+                getRecentCities().forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.className = "p-2 bg-blue-100 rounded text-left w-full";
+                    btn.textContent = c.name;
+                    btn.onclick = () => { fetchAndProcessWeather(c); toggleSearchbar(false); closePopups(); };
+                    recentCitiesListEl.appendChild(btn);
+                });
+                openPopup('recentCitiesPopup');
             });
 
-            nextDayBtn.addEventListener('click', () => {
-                if (currentDayIndex < dailyForecasts.length - 1) {
-                    currentDayIndex++;
-                    updateWeatherDisplay();
-                }
-            });
-
-            async function loadInitialCity() {
-                try {
-                    const lastCity = localStorage.getItem(LAST_CITY_KEY);
-                    let locationData = null;
-                    if (lastCity) {
-                        locationData = JSON.parse(lastCity);
-                    }
-                    
-                    if (locationData) {
-                        await fetchAndProcessWeather(locationData);
-                        toggleSearchbar(false);
-                    } else {
-                        const defaultLocation = permanentCities.find(c => c.name === STADTBERGEN_NAME) || permanentCities[0];
-                        saveRecentCities(defaultLocation);
-                        await fetchAndProcessWeather(defaultLocation);
-                        toggleSearchbar(false);
-                    }
-                } catch(e) {
-                    console.error("Fehler beim Laden des Startortes.", e);
-                    toggleSearchbar(true);
+            async function handleCitySearch(name) {
+                const locs = await getCoordinates(name);
+                if (locs) {
+                    await fetchAndProcessWeather(locs[0]);
+                    saveRecentCities(locs[0]);
+                    toggleSearchbar(false);
                 }
             }
 
-            let debounceTimeout;
-            function debounce(func, delay) {
-                return function(...args) {
-                    clearTimeout(debounceTimeout);
-                    debounceTimeout = setTimeout(() => func.apply(this, args), delay);
-                };
-            }
+            prevDayBtn.addEventListener('click', () => { if (currentDayIndex > 0) { currentDayIndex--; updateWeatherDisplay(); } });
+            nextDayBtn.addEventListener('click', () => { if (currentDayIndex < dailyForecasts.length - 1) { currentDayIndex++; updateWeatherDisplay(); } });
 
-            async function fetchAndRenderSuggestions(query) {
-                if (query.length < 3) {
-                    suggestionsContainerEl.innerHTML = '';
-                    suggestionsContainerEl.classList.add('hidden');
-                    return;
-                }
-                weatherErrorEl.classList.add('hidden');
-                
-                const locationDataList = await getCoordinates(query);
-                
-                suggestionsContainerEl.innerHTML = '';
-                if (locationDataList && locationDataList.length > 0) {
-                    locationDataList.sort((a, b) => {
-                        const getPriority = (loc) => {
-                            if (loc.country === 'Deutschland' && loc.admin1 === 'Bayern') return 1;
-                            if (loc.country === 'Deutschland') return 2;
-                            return 3;
-                        };
-
-                        const priorityA = getPriority(a);
-                        const priorityB = getPriority(b);
-
-                        if (priorityA !== priorityB) {
-                            return priorityA - priorityB;
-                        }
-
-                        const countryA = a.country || '';
-                        const countryB = b.country || '';
-                        const admin1A = a.admin1 || '';
-                        const admin1B = b.admin1 || ''; 
-                        const nameA = a.name || '';
-                        const nameB = b.name || '';
-                        
-                        const countryCompare = countryA.localeCompare(countryB);
-                        if (countryCompare !== 0) return countryCompare;
-                        
-                        const admin1Compare = admin1A.localeCompare(admin1B);
-                        if (admin1Compare !== 0) return admin1Compare;
-
-                        return nameA.localeCompare(nameB);
-                    });
-
-                    locationDataList.forEach(result => {
-                        const suggestionItem = document.createElement('div');
-                        suggestionItem.className = 'suggestion-item';
-                        
-                        let locationText = `
-                            <span class="font-semibold">${result.name}</span>
-                            <br>
-                            <span class="text-gray-500">${result.admin1 ? result.admin1 + ', ' : ''}${result.country}</span>
-                        `;
-                        suggestionItem.innerHTML = locationText;
-
-                        suggestionItem.addEventListener('click', async () => {
-                            cityInputEl.value = result.name;
-                            suggestionsContainerEl.classList.add('hidden');
-                            await fetchAndProcessWeather(result);
-                            saveRecentCities(result);
-                            toggleSearchbar(false);
-                        });
-                        suggestionsContainerEl.appendChild(suggestionItem);
-                    });
-                    suggestionsContainerEl.classList.remove('hidden');
-                } else {
-                    suggestionsContainerEl.classList.add('hidden');
-                }
-            }
-
-            cityInputEl.addEventListener('input', debounce((e) => {
-                fetchAndRenderSuggestions(e.target.value);
-            }, 300));
-
-            document.addEventListener('click', (e) => {
-                if (!cityInputEl.contains(e.target) && !suggestionsContainerEl.contains(e.target)) {
-                    suggestionsContainerEl.classList.add('hidden');
-                }
-            });
-
-            loadInitialCity();
-            
-            setInterval(() => {
-                if (lastLocationData) {
-                    console.log(`Aktualisiere Wetterdaten für ${lastLocationData.name} automatisch...`);
-                    fetchAndProcessWeather(lastLocationData);
-                }
-            }, 1800000); 
+            // Initialer Start
+            const last = localStorage.getItem(LAST_CITY_KEY);
+            fetchAndProcessWeather(last ? JSON.parse(last) : permanentCities[0]);
         });
     </script>
 </body>
