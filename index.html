@@ -698,6 +698,10 @@
                     if (!data.hourly || !data.daily) {
                         throw new Error('Ungültige oder unvollständige Daten von der API erhalten.');
                     }
+
+                    // Bestimmung des API-Zeitstempels (Basis)
+                    // Wir nehmen den ersten Zeitstempel der stündlichen Daten als Referenz für die Modell-Basis
+                    const apiBasisTime = data.hourly && data.hourly.time ? data.hourly.time[0] : null;
                     
                     dailyForecasts = groupForecastByDay(data.hourly.time, data.hourly.temperature_2m, data.hourly.weathercode, data.hourly.pressure_msl, data.hourly.windspeed_10m, data.hourly.precipitation, data.hourly.windgusts_10m);
                     dailyDataGlobal = data.daily;
@@ -710,13 +714,15 @@
                          currentDayIndex = 3;
                     }
 
-                    updateWeatherDisplay();
+                    // Anzeige aktualisieren, übergebe den Zeitstempel nur bei Erfolg
+                    updateWeatherDisplay(apiBasisTime);
 
                 } catch (error) {
                     console.error("Fehler beim Abrufen der Wetterdaten:", error);
                     weatherErrorEl.textContent = "Wetterdaten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.";
                     weatherErrorEl.classList.remove('hidden');
                     summaryStatusEl.classList.add('hidden'); 
+                    // Hinweis: dataValidFromEl wird hier NICHT aktualisiert, so bleibt der letzte Stand im Flugmodus erhalten.
                 }
             }
             
@@ -856,8 +862,15 @@
                 return uniqueWarnings;
             }
 
-            function updateWeatherDisplay() {
-                // Erst prüfen, ob Daten gültig sind
+            function updateWeatherDisplay(apiTime) {
+                // ANPASSUNG: Zeitstempel der Modell-Basis nur bei Erfolg setzen
+                if (apiTime) {
+                    const basisDate = new Date(apiTime);
+                    const dateStr = basisDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const timeStr = basisDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
+                }
+
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
                     summaryStatusEl.classList.remove('hidden');
@@ -866,12 +879,6 @@
                     return;
                 }
                 
-                // NUR WENN DATEN GÜLTIG SIND: Basis-Zeitstempel aktualisieren
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
-
                 summaryStatusEl.classList.add('hidden');
                 hourlyForecastContainerEl.classList.remove('opacity-0');
                 weatherErrorEl.classList.add('hidden');
@@ -887,6 +894,7 @@
 
                 const firstForecast = currentDayForecast[0];
                 const dailyIndex = currentDayIndex;
+                const now = new Date();
                 const today = now.toLocaleDateString('de-DE');
                 const yesterday = new Date(now.getTime() - 86400000).toLocaleDateString('de-DE');
                 const tomorrow = new Date(now.getTime() + 86400000).toLocaleDateString('de-DE');
