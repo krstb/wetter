@@ -857,14 +857,7 @@
             }
 
             function updateWeatherDisplay() {
-                const now = new Date();
-             /*   lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;*/
-                
-                // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
-                const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
-
+                // Erst prüfen, ob Daten gültig sind
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
                     summaryStatusEl.classList.remove('hidden');
@@ -873,6 +866,12 @@
                     return;
                 }
                 
+                // NUR WENN DATEN GÜLTIG SIND: Basis-Zeitstempel aktualisieren
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
+
                 summaryStatusEl.classList.add('hidden');
                 hourlyForecastContainerEl.classList.remove('opacity-0');
                 weatherErrorEl.classList.add('hidden');
@@ -1269,7 +1268,3 @@
     </script>
 </body>
 </html>
-
-
-
-
