@@ -28,7 +28,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap');
         
         /* Fix für PWA-Ränder */
-    html {background-color: #000000 !important;}
+    html {background-color: #00FF00 !important;}
         
         body {
             font-family: 'Inter', sans-serif;
@@ -863,7 +863,7 @@
                 // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
                 const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
+            /* dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;*/
 
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
@@ -1269,6 +1269,7 @@
     </script>
 </body>
 </html>
+
 
 
 
