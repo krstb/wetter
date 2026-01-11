@@ -863,10 +863,7 @@
                 // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
                 const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                // Zeigt die Uhrzeit des letzten erfolgreichen Datenempfangs an
-const now = new Date();
-const timeString = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-dataValidFromEl.textContent = `Empfangen: ${timeString} Uhr`;
+                dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
 
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
@@ -1272,7 +1269,6 @@ dataValidFromEl.textContent = `Empfangen: ${timeString} Uhr`;
     </script>
 </body>
 </html>
-
 
 
 
