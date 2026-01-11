@@ -858,7 +858,7 @@
 
             function updateWeatherDisplay() {
                 const now = new Date();
-                lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
+             /*   lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;*/
                 
                 // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
                 const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -1264,8 +1264,9 @@
                     console.log(`Aktualisiere Wetterdaten für ${lastLocationData.name} automatisch...`);
                     fetchAndProcessWeather(lastLocationData);
                 }
-            }, 1800000); 
+            }, 18000); 
         });
     </script>
 </body>
 </html>
+
