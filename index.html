@@ -699,30 +699,36 @@
                         throw new Error('Ungültige oder unvollständige Daten von der API erhalten.');
                     }
 
-                    // Bestimmung des API-Zeitstempels (Basis)
-                    // Wir nehmen den ersten Zeitstempel der stündlichen Daten als Referenz für die Modell-Basis
+                    // NEU: Zeitpunkt des erfolgreichen Abrufs festhalten
+                    const currentFetchTime = new Date();
+                    // Die API-Basis (Modellzeit) - nehmen wir den ersten Zeitstempel der stündlichen Daten
                     const apiBasisTime = data.hourly && data.hourly.time ? data.hourly.time[0] : null;
                     
                     dailyForecasts = groupForecastByDay(data.hourly.time, data.hourly.temperature_2m, data.hourly.weathercode, data.hourly.pressure_msl, data.hourly.windspeed_10m, data.hourly.precipitation, data.hourly.windgusts_10m);
                     dailyDataGlobal = data.daily;
-                    const today = new Date().toLocaleDateString('de-DE');
                     
-                    // Findet den Index des heutigen Tages, startet bei Tag 3 (index 3) bei Past-Days=3
-                    currentDayIndex = dailyForecasts.findIndex(day => new Date(day[0].time).toLocaleDateString('de-DE') === today);
+                    // Optimierte Logik zur Bestimmung des heutigen Tages-Indexes
+                    const todayDate = new Date();
+                    todayDate.setHours(0, 0, 0, 0);
+
+                    currentDayIndex = dailyForecasts.findIndex(day => {
+                        const d = new Date(day[0].time);
+                        d.setHours(0, 0, 0, 0);
+                        return d.getTime() === todayDate.getTime();
+                    });
+
                     if (currentDayIndex === -1) {
-                         // Fallback auf den ersten Tag nach den Vergangenheitsdaten
+                         // Fallback auf den ersten Tag nach den Vergangenheitsdaten (Index 3 bei past_days=3)
                          currentDayIndex = 3;
                     }
 
-                    // Anzeige aktualisieren, übergebe den Zeitstempel nur bei Erfolg
-                    updateWeatherDisplay(apiBasisTime);
+                    updateWeatherDisplay(apiBasisTime, currentFetchTime);
 
                 } catch (error) {
                     console.error("Fehler beim Abrufen der Wetterdaten:", error);
-                    weatherErrorEl.textContent = "Wetterdaten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.";
+                    weatherErrorEl.textContent = "Keine Internetverbindung oder Serverfehler. Zeige alte Daten.";
                     weatherErrorEl.classList.remove('hidden');
                     summaryStatusEl.classList.add('hidden'); 
-                    // Hinweis: dataValidFromEl wird hier NICHT aktualisiert, so bleibt der letzte Stand im Flugmodus erhalten.
                 }
             }
             
@@ -862,20 +868,22 @@
                 return uniqueWarnings;
             }
 
-            function updateWeatherDisplay(apiTime) {
-                // ANPASSUNG: Zeitstempel der Modell-Basis nur bei Erfolg setzen
-                if (apiTime) {
-                    const basisDate = new Date(apiTime);
-                    const dateStr = basisDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    const timeStr = basisDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                    dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
+            function updateWeatherDisplay(apiTime, fetchTime) {
+                // ANPASSUNG: Anzeige beider Zeitpunkte
+                if (apiTime && fetchTime) {
+                    const bDate = new Date(apiTime);
+                    const bTimeStr = bDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const fTimeStr = fetchTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    const fDateStr = fetchTime.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+                    dataValidFromEl.textContent = `Basis: ${bTimeStr} | Abruf: ${fDateStr}, ${fTimeStr} Uhr`;
                 }
 
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
                     summaryStatusEl.classList.remove('hidden');
                     summaryDataEl.classList.add('hidden');
-                    lastUpdatedEl.textContent = '';
                     return;
                 }
                 
