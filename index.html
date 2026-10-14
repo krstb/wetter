@@ -554,12 +554,14 @@
             let currentDayIndex = 0;
             let lastLocationData = null;
             const STADTBERGEN_NAME = 'Stadtbergen';
+          const AUGSBURG_NAME = 'Augsburg';
             const LAST_CITY_KEY = 'lastCity';
             const RECENT_CITIES_KEY = 'recentCities';
             
-            // Nur Stadtbergen bleibt als permanente Stadt/Fallback.
+            // Nur Stadtbergen und Augsburg bleibt als permanente Stadt/Fallback.
             const permanentCities = [
-                { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true }
+                { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true },
+            { name: "Augsburg", lat: 48.37154, lon: 10.89851, country: "Deutschland", admin1: "Bayern", isPermanent: true }
             ];
             
             function openPopup(popupId) {
