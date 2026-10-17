@@ -554,14 +554,12 @@
             let currentDayIndex = 0;
             let lastLocationData = null;
             const STADTBERGEN_NAME = 'Stadtbergen';
-          const AUGSBURG_NAME = 'Augsburg';
             const LAST_CITY_KEY = 'lastCity';
             const RECENT_CITIES_KEY = 'recentCities';
             
-            // Nur Stadtbergen und Augsburg bleibt als permanente Stadt/Fallback.
+            // Nur Stadtbergen bleibt als permanente Stadt/Fallback.
             const permanentCities = [
-                { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true },
-            { name: "Augsburg", lat: 48.37154, lon: 10.89851, country: "Deutschland", admin1: "Bayern", isPermanent: true }
+                { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true }
             ];
             
             function openPopup(popupId) {
@@ -657,7 +655,7 @@
                     cities.splice(existingIndex, 1);
                 }
                 cities.unshift(locationData);
-                cities = cities.filter((c, index, self) => index === self.findIndex(t => t.name === c.name && t.country === c.country));
+                cities = cities.filter((c, index, self) => index === self.findIndex(t => t.name === c.name && t.country === t.country));
                 localStorage.setItem(RECENT_CITIES_KEY, JSON.stringify(cities.slice(0, 10)));
                 localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
             }
@@ -708,9 +706,10 @@
                     dailyDataGlobal = data.daily;
                     const today = new Date().toLocaleDateString('de-DE');
                     
-                    // Findet den Index des heutigen Tages
+                    // Findet den Index des heutigen Tages, startet bei Tag 3 (index 3) bei Past-Days=3
                     currentDayIndex = dailyForecasts.findIndex(day => new Date(day[0].time).toLocaleDateString('de-DE') === today);
                     if (currentDayIndex === -1) {
+                         // Fallback auf den ersten Tag nach den Vergangenheitsdaten
                          currentDayIndex = 3;
                     }
 
@@ -723,7 +722,7 @@
                     summaryStatusEl.classList.add('hidden'); 
                 }
             }
-
+            
             function groupForecastByDay(times, temps, codes, pressures, windspeeds, precipitations, windgusts) {
                 const grouped = {};
                 times.forEach((timeStr, index) => {
@@ -847,6 +846,7 @@
                     }
                 }
                 
+                // De-duplicate warnings, keeping the first one for each headline.
                 const uniqueWarnings = [];
                 const seenHeadlines = new Set();
                 for (const warning of warnings) {
@@ -861,8 +861,12 @@
 
             function updateWeatherDisplay() {
                 const now = new Date();
+             /*   lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;*/
+                
+                // ANPASSUNG: Berechnungsbasis auf Zeitpunkt der API-Abfrage setzen
                 const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            /* dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;*/
 
                 if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
                     summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
@@ -1147,18 +1151,6 @@
                 }
             });
 
-            // Klick auf die Datumsanzeige springt zurück auf "Heute"
-            currentDateDisplayEl.classList.add('cursor-pointer');
-            currentDateDisplayEl.addEventListener('click', () => {
-                const today = new Date().toLocaleDateString('de-DE');
-                const todayIndex = dailyForecasts.findIndex(day => new Date(day[0].time).toLocaleDateString('de-DE') === today);
-                
-                if (todayIndex !== -1) {
-                    currentDayIndex = todayIndex;
-                    updateWeatherDisplay();
-                }
-            });
-
             async function loadInitialCity() {
                 try {
                     const lastCity = localStorage.getItem(LAST_CITY_KEY);
@@ -1280,3 +1272,18 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
