@@ -694,7 +694,7 @@
                 
                 try {
                     const timezone = 'Europe/Berlin';
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,pressure_msl,windspeed_10m,precipitation,windgusts_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,precipitation_sum,sunshine_duration,windgusts_10m_max&timezone=${timezone}&forecast_days=16&past_days=1`;
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,pressure_msl,windspeed_10m,precipitation,windgusts_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,precipitation_sum,sunshine_duration,windgusts_10m_max&timezone=${timezone}&forecast_days=16&past_days=3`;
 
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`Fehler beim Laden der Wetterdaten: ${response.statusText}`);
