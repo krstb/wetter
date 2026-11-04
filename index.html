@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Wetter</title>
 
     <link rel="manifest" href="manifest.json">
@@ -185,7 +185,7 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-400 to-purple-600 min-h-screen flex flex-col items-center p-2">
+<body class="bg-gradient-to-br from-blue-400 to-purple-600 min-h-screen flex flex-col items-center p-4 pt-4">
     <div class="bg-white pt-8 px-1 pb-8 rounded-xl shadow-2xl text-center max-w-lg w-full mb-8">
         <h1 id="weatherLocation" class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-2 cursor-pointer hover:text-blue-600">
             
@@ -554,14 +554,14 @@
             let currentDayIndex = 0;
             let lastLocationData = null;
             const STADTBERGEN_NAME = 'Stadtbergen';
-          const AUGSBURG_NAME = 'Augsburg';
+            const AUGSBURG_NAME = 'Augsburg';
             const LAST_CITY_KEY = 'lastCity';
             const RECENT_CITIES_KEY = 'recentCities';
             
             // Nur Stadtbergen und Augsburg bleibt als permanente Stadt/Fallback.
             const permanentCities = [
                 { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true },
-            { name: "Augsburg", lat: 48.37154, lon: 10.89851, country: "Deutschland", admin1: "Bayern", isPermanent: true }
+                { name: "Augsburg", lat: 48.37154, lon: 10.89851, country: "Deutschland", admin1: "Bayern", isPermanent: true }
             ];
             
             function openPopup(popupId) {
@@ -628,7 +628,6 @@
                 return descriptionMap[wmoCode] || 'Unbekanntes Wetter';
             }
             
-            // Geocoding-Funktion, die eine Liste von Ergebnissen zurückgibt
             async function getCoordinates(cityName) {
                 const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=100&language=de&format=json`;
                 try {
@@ -645,7 +644,6 @@
                 }
             }
             
-            // Funktion zum Speichern der zuletzt gesuchten Städte (mit Koordinaten)
             function saveRecentCities(locationData) {
                 if (locationData.isPermanent) {
                     localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
@@ -662,7 +660,6 @@
                 localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
             }
 
-            // Funktion zum Abrufen der zuletzt gesuchten Städte
             function getRecentCities() {
                 try {
                     const recent = JSON.parse(localStorage.getItem(RECENT_CITIES_KEY)) || [];
@@ -675,7 +672,6 @@
                 }
             }
 
-            // Kernfunktion zur Verarbeitung und Anzeige des Wetters, nimmt einen kompletten Standort-Datensatz entgegen
             async function fetchAndProcessWeather(locationData) {
                 const { lat, lon, name: cityName } = locationData;
                 lastLocationData = locationData; 
@@ -708,7 +704,6 @@
                     dailyDataGlobal = data.daily;
                     const today = new Date().toLocaleDateString('de-DE');
                     
-                    // Findet den Index des heutigen Tages
                     currentDayIndex = dailyForecasts.findIndex(day => new Date(day[0].time).toLocaleDateString('de-DE') === today);
                     if (currentDayIndex === -1) {
                          currentDayIndex = 3;
@@ -748,7 +743,6 @@
                     return warnings;
                 }
 
-                // --- HOURLY CHECKS (Primary) ---
                 if (hasHourlyData) {
                     const thunderstormHour = hourlyData.find(h => [95, 96, 99].includes(h.code));
                     if (thunderstormHour) {
@@ -817,7 +811,6 @@
                     }
                 }
                 
-                // --- DAILY CHECKS (Fallback) ---
                 if (hasDailyData) {
                     const dailyWindGust = dailyData.windgusts_10m_max[index];
                     const dailyRainSum = dailyData.precipitation_sum[index];
@@ -1147,7 +1140,6 @@
                 }
             });
 
-            // Klick auf die Datumsanzeige springt zurück auf "Heute"
             currentDateDisplayEl.classList.add('cursor-pointer');
             currentDateDisplayEl.addEventListener('click', () => {
                 const today = new Date().toLocaleDateString('de-DE');
