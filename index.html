@@ -62,17 +62,19 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            touch-action: none; /* Verhindert Touch-Gesten auf dem Overlay */
         }
         .popup-content {
             background-color: white;
-            padding: 24px;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
+            width: 600px;
+            max-width: 60vw;
+            max-height: 85vh;
             overflow-y: auto;
             position: relative;
+            touch-action: pan-y; /* Erlaubt nur vertikales Scrollen im Popup */
         }
         .close-btn {
             position: absolute;
@@ -214,7 +216,7 @@
             <div id="weatherDisplay">
                 <div class="flex items-center justify-between mb-8 h-16">
                     <button id="prevDayBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                        <
+                        &lt;
                     </button>
 
                     <div class="flex-grow flex flex-col items-center justify-center">
@@ -226,7 +228,7 @@
                     </div>
 
                     <button id="nextDayBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                        >
+                        &gt;
                     </button>
                 </div>
 
@@ -257,7 +259,7 @@
     </div>
 
     <div id="windPopup" class="popup-overlay">
-        <div class="popup-content max-w-2xl responsive-table">
+        <div class="popup-content responsive-table">
             <span class="close-btn">×</span>
             
             <table class="table-fixed w-full text-sm text-left text-gray-500">
@@ -270,7 +272,7 @@
                 </thead>
                 <tbody>
                     <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">< 1</span> <span class="text-gray-500">(0 - 0,2)</span></td>
+                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">&lt; 1</span> <span class="text-gray-500">(0 - 0,2)</span></td>
                         <td data-label="Bezeichnung" class="px-2 py-1">Windstille</td>
                         <td data-label="Beispiele" class="px-2 py-1">Rauch steigt senkrecht auf</td>
                     </tr>
@@ -340,7 +342,7 @@
     </div>
 
     <div id="rainPopup" class="popup-overlay">
-        <div class="popup-content max-xl responsive-table"> 
+        <div class="popup-content responsive-table"> 
             <span class="close-btn">×</span>
             
             <table class="table-auto w-full text-sm text-left text-gray-500">
@@ -353,7 +355,7 @@
                 </thead>
                 <tbody>
                     <tr class="bg-green-100 border-b">
-                        <td data-label="pro h / 24 h (mm)" class="px-2 py-1">< 5 / < 10</td>
+                        <td data-label="pro h / 24 h (mm)" class="px-2 py-1">&lt; 5 / &lt; 10</td>
                         <td data-label="Kategorie" class="px-2 py-1">Leicht</td>
                         <td data-label="Auswirkungen" class="px-2 py-1">Normaler Regen, ohne Beeinträchtigungen</td>
                     </tr>
@@ -373,7 +375,7 @@
                         <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: Überflutungen, vollgelaufene Keller und Unterführungen</td>
                     </tr>
                     <tr class="bg-purple-100">
-                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">> 40 / > 80</td>
+                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">&gt; 40 / &gt; 80</td>
                         <td data-label="Kategorie" class="px-2 py-1">Extremes Unwetter</td>
                         <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: Lebensbedrohliche Situationen, massive Überflutungen</td>
                     </tr>
@@ -387,7 +389,7 @@
     </div>
 
     <div id="alertPopup" class="popup-overlay">
-        <div class="popup-content max-xl">
+        <div class="popup-content">
             <span class="close-btn">×</span>
             <div class="flex items-center gap-3 mb-4">
                 <h2 id="alertPopupHeadline" class="text-2xl font-bold"></h2>
@@ -400,7 +402,7 @@
     </div>
 
     <div id="thresholdsPopup" class="popup-overlay">
-        <div class="popup-content max-w-2xl">
+        <div class="popup-content">
             <span class="close-btn">×</span>
             <div class="flex items-center gap-3 mb-4">
                 <h2 class="text-2xl font-bold">Warnschwellenwerte</h2>
@@ -412,23 +414,23 @@
                 
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <h4 class="font-bold mb-1">Wind und Windböen</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> >= 62 km/h</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> >= 75 km/h</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> >= 90 km/h</p>
+                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 62 km/h</p>
+                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 75 km/h</p>
+                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 90 km/h</p>
                 </div>
                 
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <h4 class="font-bold mb-1">Starkregen pro Stunde</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> >= 5 mm/h</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> >= 15 mm/h</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> >= 40 mm/h</p>
+                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 5 mm/h</p>
+                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 15 mm/h</p>
+                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 40 mm/h</p>
                 </div>
                 
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <h4 class="font-bold mb-1">Starkregen Tagessumme</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> >= 15 mm</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> >= 30 mm</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> >= 80 mm</p>
+                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 15 mm</p>
+                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 30 mm</p>
+                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 80 mm</p>
                 </div>
                 
                 <div class="bg-gray-50 p-3 rounded-lg"> 
@@ -444,7 +446,7 @@
     </div>
 
     <div id="significantEventsPopup" class="popup-overlay">
-        <div class="popup-content max-xl">
+        <div class="popup-content">
             <span class="close-btn">×</span>
             <h2 class="text-2xl font-bold mb-4">Signifikante Ereignisse</h2>
             <div class="space-y-6">
@@ -499,7 +501,7 @@
     </div>
 
     <div id="recentCitiesPopup" class="popup-overlay">
-        <div class="popup-content max-w-sm p-6 text-center">
+        <div class="popup-content p-6 text-center">
             <span class="close-btn">×</span>
             <h2 class="text-2xl font-bold mb-4">Gespeicherte Städte</h2>
             <div id="recentCitiesList" class="flex flex-col space-y-2">
@@ -566,6 +568,7 @@
             
             function openPopup(popupId) {
                 document.getElementById(popupId).style.display = 'flex';
+                document.body.style.overflow = 'hidden'; /* Fixiert den Hintergrund */
             }
 
             function closePopups() {
@@ -573,6 +576,7 @@
                 popups.forEach(popup => {
                     popup.style.display = 'none';
                 });
+                document.body.style.overflow = ''; /* Gibt das Scrollen wieder frei */
             }
 
             document.querySelectorAll('.close-btn, .popup-content').forEach(element => {
