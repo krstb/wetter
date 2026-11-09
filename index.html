@@ -555,13 +555,17 @@
             let lastLocationData = null;
             const STADTBERGEN_NAME = 'Stadtbergen';
             const AUGSBURG_NAME = 'Augsburg';
+			const HAMBURG_NAME = 'Hamburg';
+            const BREMEN_NAME = 'Bremen';
             const LAST_CITY_KEY = 'lastCity';
             const RECENT_CITIES_KEY = 'recentCities';
             
-            // Nur Stadtbergen und Augsburg bleibt als permanente Stadt/Fallback.
+            //  Spermanente Städte
             const permanentCities = [
                 { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true },
-                { name: "Augsburg", lat: 48.37154, lon: 10.89851, country: "Deutschland", admin1: "Bayern", isPermanent: true }
+                { name: "Augsburg", lat: 48.37154, lon: 10.89851, country: "Deutschland", admin1: "Bayern", isPermanent: true },
+				{ name: "Hamburg", lat: 53.551086, lon: 9.993682, country: "Deutschland", admin1: "Hamburg", isPermanent: true },
+                { name: "Bremen", lat: 53.079296, lon: 8.801694, country: "Deutschland", admin1: "Bremen", isPermanent: true }
             ];
             
             function openPopup(popupId) {
